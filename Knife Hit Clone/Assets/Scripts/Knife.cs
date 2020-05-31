@@ -5,6 +5,7 @@ using UnityEngine;
 public class Knife : MonoBehaviour
 {
     bool attached;
+    
 
     private void OnTriggerEnter2D (Collider2D other)
     {
@@ -14,12 +15,13 @@ public class Knife : MonoBehaviour
         if (other.CompareTag("Knife"))
         {
             Debug.Log("Hit a knife");
-            GameManager.instance.HitAKnife();
+            PlayManager.instance.HitAKnife();
         }
         else if (other.CompareTag("Ball"))
         {
             transform.SetParent(other.transform);
             attached = true;
+            PlayManager.instance.HitBall();
         }
     }
 }

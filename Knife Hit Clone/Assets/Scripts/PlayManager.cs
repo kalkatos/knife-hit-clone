@@ -2,16 +2,23 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+public class PlayManager : MonoBehaviour
 {
-    public static GameManager instance;
+    public static PlayManager instance;
+
+    [Header("UI Objects")]
+    public GameObject titleUI;
+    public GameObject gameOverUI;
 
     [Header("Setup Objects")]
     public GameObject basicKnife;
     public GameObject knifePrefab;
+    public GameObject ballPrefab;
     public Transform knifePosition;
-    public Transform ball;
-    public SpriteRenderer ballGraphics;
+    public Transform ballPosition;
+    public ParticleSystem knifeHitParticles;
+    public ParticleSystem ballHitParticles;
+    public Ball ball;
 
     [Header("Knife Variables")]
     public float knifeSpeed;
@@ -29,8 +36,11 @@ public class GameManager : MonoBehaviour
     public List<Stage> stages;
 
     private Knife currentKnife;
+    private int currentStage;
     private float knifeTravelDistance;
     private float stageStartTime;
+
+    #region PRIVATE METHODS ====================================================================================================================
 
     private void Awake ()
     {
@@ -43,9 +53,9 @@ public class GameManager : MonoBehaviour
 
     private void Start ()
     {
-        CreateKnife();
-        knifeTravelDistance = (ball.position - knifePosition.position).magnitude - ballRadius;
-        StartStage(stages[0]);
+        knifeTravelDistance = (ballPosition.position - knifePosition.position).magnitude - ballRadius;
+        titleUI.SetActive(true);
+        gameOverUI.SetActive(false);
     }
 
     private void Update ()
@@ -63,7 +73,7 @@ public class GameManager : MonoBehaviour
 
         float currentStageTime = Time.time - stageStartTime;
         currentRotationSpeed = rotationSpeedCurve.Evaluate((currentStageTime % rotationSpeedCurveLength) / rotationSpeedCurveLength) * baseRotationSpeed;
-        ball.Rotate(0, 0, currentRotationSpeed * Time.deltaTime);
+        ballPosition.Rotate(0, 0, currentRotationSpeed * Time.deltaTime);
     }
 
     private void CreateKnife ()
@@ -74,22 +84,52 @@ public class GameManager : MonoBehaviour
     private void StartStage (Stage stage)
     {
         stageStartTime = Time.time;
-        ballGraphics.sprite = stage.ballGraphics;
+        //Ball setup
+        GameObject newBall = Instantiate(ballPrefab, ballPosition) as GameObject;
+        newBall.GetComponent<SpriteRenderer>().sprite = stage.ballGraphics;
+        //Stage setup
         knifeQuantity = stage.knifeQuantity;
         rotationSpeedCurve = stage.rotationSpeedCurve;
         rotationSpeedCurveLength = stage.rotationSpeedCurveLength;
+        //Starting knives
         for (int i = 0; i < stage.startingKnifePositions.Count; i++)
         {
             float angle = stage.startingKnifePositions[i];
             Vector3 anglePosition = new Vector3(ballRadius * Mathf.Cos(angle * Mathf.Deg2Rad), ballRadius * Mathf.Sin(angle * Mathf.Deg2Rad));
             Vector3 posUpwards = -anglePosition;
-            Instantiate(basicKnife, ball.position + anglePosition, Quaternion.LookRotation(Vector3.forward, posUpwards), ball);
+            Instantiate(basicKnife, ballPosition.position + anglePosition, Quaternion.LookRotation(Vector3.forward, posUpwards), ballPosition);
+        }
+        CreateKnife();
+    }
+
+    private IEnumerator EndStage (bool isWin)
+    {
+        Debug.Log("Game Ended with a " + (isWin ? "WIN!" : "LOSS..."));
+        if (isWin)
+        {
+            ball.Explode();
+            
+            currentStage++;
+            if (currentStage >= stages.Count)
+            {
+                EndGame();
+            }
+            else
+            {
+                yield return new WaitForSeconds(0.5f);
+                StartStage(stages[currentStage]);
+            }
+        }
+        else
+        {
+            EndGame();
         }
     }
 
-    private void EndStage (bool isWin)
+    private void EndGame ()
     {
-        
+        titleUI.SetActive(false);
+        gameOverUI.SetActive(true);
     }
 
     private IEnumerator SpawnNewKnife ()
@@ -115,12 +155,30 @@ public class GameManager : MonoBehaviour
 
         if (knifeQuantity <= 0)
         {
-            EndStage(true);
+            StartCoroutine(EndStage(true));
         }
+    }
+    #endregion
+
+    #region PUBLIC METHODS ====================================================================================================================
+
+    public void StartGame ()
+    {
+        titleUI.SetActive(false);
+        gameOverUI.SetActive(false);
+        StartStage(stages[0]);
     }
 
     public void HitAKnife ()
     {
-        EndStage(false);
+        knifeHitParticles.Play();
+        currentRotationSpeed = 0;
+        StartCoroutine(EndStage(false));
     }
+
+    public void HitBall ()
+    {
+        ballHitParticles.Play();
+    }
+    #endregion
 }
