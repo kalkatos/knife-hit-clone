@@ -54,8 +54,10 @@ public class GameManager : MonoBehaviour
         {
             if (currentKnife != null)
             {
+                knifeQuantity--;
                 StartCoroutine(MoveKnife());
-                StartCoroutine(SpawnNewKnife());
+                if (knifeQuantity > 0)
+                    StartCoroutine(SpawnNewKnife());
             }
         }
 
@@ -79,9 +81,15 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < stage.startingKnifePositions.Count; i++)
         {
             float angle = stage.startingKnifePositions[i];
-            Vector3 anglePosition = new Vector3(ballRadius * Mathf.Cos(angle), ballRadius * Mathf.Sin(angle));
-            Instantiate(basicKnife, ball.position + anglePosition, Quaternion.identity, ball);
+            Vector3 anglePosition = new Vector3(ballRadius * Mathf.Cos(angle * Mathf.Deg2Rad), ballRadius * Mathf.Sin(angle * Mathf.Deg2Rad));
+            Vector3 posUpwards = -anglePosition;
+            Instantiate(basicKnife, ball.position + anglePosition, Quaternion.LookRotation(Vector3.forward, posUpwards), ball);
         }
+    }
+
+    private void EndStage (bool isWin)
+    {
+        
     }
 
     private IEnumerator SpawnNewKnife ()
@@ -104,10 +112,15 @@ public class GameManager : MonoBehaviour
             amountToMove -= movingAmount;
             yield return null;
         }
+
+        if (knifeQuantity <= 0)
+        {
+            EndStage(true);
+        }
     }
 
     public void HitAKnife ()
     {
-
+        EndStage(false);
     }
 }
