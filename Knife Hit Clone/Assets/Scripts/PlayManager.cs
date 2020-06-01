@@ -4,6 +4,13 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 
+/// <summary>
+/// Classe básica com a funcionalidade do jogo.
+/// Atualmente é responsável por 3 coisas:
+/// - Controlar as mecânicas do jogo;
+/// - Guardar, inicializar e trocar fases;
+/// - Atualizar a UI
+/// </summary>
 public class PlayManager : MonoBehaviour
 {
 	public static PlayManager instance;
@@ -76,6 +83,7 @@ public class PlayManager : MonoBehaviour
 
 	private void Update ()
 	{
+		//Se o jogador clicou, atirar uma faca
 		if (gameRunning)
 		{
 			if (Input.anyKeyDown)
@@ -88,42 +96,35 @@ public class PlayManager : MonoBehaviour
 					scoreCounterUI.text = knivesThrew.ToString();
 					StartCoroutine(MoveKnife());
 					if (knifeQuantity > 0)
-						StartCoroutine(SpawnNewKnife());
+						StartCoroutine(CreateKnifeAfterSeconds());
 				}
 			}
 
+			//Gira a bola
 			float currentStageTime = Time.time - stageStartTime;
 			currentRotationSpeed = rotationSpeedCurve.Evaluate((currentStageTime % rotationSpeedCurveLength) / rotationSpeedCurveLength) * baseRotationSpeed;
 			ballPosition.Rotate(0, 0, currentRotationSpeed * Time.deltaTime);
 		}
 	}
 
-	private void CreateKnife ()
-	{
-		if (!gameRunning)
-			return;
-		currentKnife = Instantiate(knifePrefab, knifePosition.position, Quaternion.identity, knifePosition).GetComponent<Knife>();
-		currentKnife.PlayAnimation();
-	}
-
 	private void StartStage (Stage stage)
 	{
 		stageStartTime = Time.time;
-		//Ball setup
+		//Setup da bola
 		GameObject newBall = Instantiate(ballPrefab, ballPosition) as GameObject;
 		SpriteRenderer[] renderers = newBall.GetComponentsInChildren<SpriteRenderer>();
 		for (int i = 0; i < renderers.Length; i++)
 		{
 			renderers[i].sprite = stage.ballGraphics;
 		}
-		//Stage setup
+		//Setup da fase
 		gameRunning = true;
 		knifeQuantity = stage.knifeQuantity;
 		knifeCountersUI.Set(knifeQuantity);
 		stageNameUI.text = stage.stageInfo;
 		rotationSpeedCurve = stage.rotationSpeedCurve;
 		rotationSpeedCurveLength = stage.rotationSpeedCurveLength;
-		//Starting knives
+		//Setup das facas iniciais
 		for (int i = 0; i < stage.startingKnifePositions.Count; i++)
 		{
 			float angle = stage.startingKnifePositions[i];
@@ -134,7 +135,15 @@ public class PlayManager : MonoBehaviour
 		CreateKnife();
 	}
 
-	private IEnumerator SpawnNewKnife ()
+	private void CreateKnife ()
+	{
+		if (!gameRunning)
+			return;
+		currentKnife = Instantiate(knifePrefab, knifePosition.position, Quaternion.identity, knifePosition).GetComponent<Knife>();
+		currentKnife.PlayAnimation();
+	}
+
+	private IEnumerator CreateKnifeAfterSeconds ()
 	{
 		yield return new WaitForSeconds(timeForNewKnife);
 		CreateKnife();

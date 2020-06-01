@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// Responsável por iniciar cenas e guardar informações do jogador.
+/// </summary>
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;

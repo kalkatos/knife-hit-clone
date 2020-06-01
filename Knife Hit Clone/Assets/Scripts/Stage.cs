@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Guarda informações de uma fase.
+/// </summary>
 [System.Serializable]
 public class Stage
 {

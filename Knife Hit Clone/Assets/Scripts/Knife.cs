@@ -3,6 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Detecta colisões com outras facas ou com a bola e toca a animação de inicialização da faca.
+/// </summary>
 public class Knife : MonoBehaviour
 {
     bool attached;
