@@ -6,7 +6,7 @@ using UnityEngine;
 public class Stage
 {
     [Header("Stage Info")]
-    [SerializeField] public int stageNumber;
+    [SerializeField] public string stageInfo;
     
     [Header("Ball Presets")]
     [SerializeField] public Sprite ballGraphics;
